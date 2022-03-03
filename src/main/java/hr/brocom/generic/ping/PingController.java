@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/ping")
-public class PingController extends AbstractCrudController<Ping, PingService> {
+public class PingController extends AbstractCrudController<Ping, PingDto, PingService, PingMapper> {
     protected PingController() {
         super(Ping.class);
     }

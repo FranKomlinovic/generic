@@ -26,7 +26,7 @@ public class ReleaseNotesController {
     }
 
     @GetMapping("/current")
-    public ResponseEntity<ReleaseNote> getCurrentVersion(final @Value("${application.version}") String version) throws ChangeSetPersister.NotFoundException {
+    public ResponseEntity<ReleaseNote> getCurrentVersion(final @Value("${project.version}") String version) throws ChangeSetPersister.NotFoundException {
         return ResponseEntity.ok(releaseNoteConfig.getReleaseNotes().stream().filter(a -> a.getVersion().equalsIgnoreCase(version))
                 .findFirst().orElseThrow(ChangeSetPersister.NotFoundException::new));
     }

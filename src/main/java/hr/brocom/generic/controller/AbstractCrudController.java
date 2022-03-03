@@ -1,7 +1,9 @@
 package hr.brocom.generic.controller;
 
 import hr.brocom.generic.SearchCriteria;
+import hr.brocom.generic.entity.BaseDto;
 import hr.brocom.generic.entity.BaseEntity;
+import hr.brocom.generic.mapper.AbstractCrudMapper;
 import hr.brocom.generic.service.AbstractCrudService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +22,15 @@ import javax.validation.Valid;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
-public class AbstractCrudController<ENTITY extends BaseEntity, SERVICE extends AbstractCrudService<ENTITY>> {
+public class AbstractCrudController<ENTITY extends BaseEntity, DTO extends BaseDto, SERVICE extends AbstractCrudService<ENTITY>, MAPPER extends AbstractCrudMapper<ENTITY, DTO>> {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractCrudController.class);
 
     @Autowired
     protected SERVICE service;
+
+    @Autowired
+    protected MAPPER mapper;
 
     protected final String className;
 
@@ -43,6 +48,15 @@ public class AbstractCrudController<ENTITY extends BaseEntity, SERVICE extends A
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping(path = "/details/{id}")
+    public ResponseEntity<DTO> getDetailsById(@PathVariable("id") final Long id) {
+        LOGGER.info("Getting {} with ID: {}...", className, id);
+        final long time = System.currentTimeMillis();
+        final DTO result = mapper.toDto(service.findById(id));
+        LOGGER.debug("{}.findById() finished in {} ms", getServiceName(), System.currentTimeMillis() - time);
+        LOGGER.info("{}.findById() returned {}", getServiceName(), result);
+        return ResponseEntity.ok(result);
+    }
 
     @GetMapping(path = "/{id}")
     public ResponseEntity<ENTITY> findById(@PathVariable("id") final Long id) {
@@ -55,20 +69,20 @@ public class AbstractCrudController<ENTITY extends BaseEntity, SERVICE extends A
     }
 
     @GetMapping()
-    public ResponseEntity<List<ENTITY>> findAll() {
+    public ResponseEntity<List<DTO>> findAll() {
         LOGGER.info("Getting all {}s...", className);
         final long time = System.currentTimeMillis();
-        final List<ENTITY> result = service.findAll(Sort.unsorted());
+        final List<DTO> result = mapper.toDto(service.findAll(Sort.by(new Sort.Order(Sort.Direction.DESC, "updated"))));
         LOGGER.debug("{}.findAll() finished in {} ms", getServiceName(), System.currentTimeMillis() - time);
         LOGGER.info("{}.findAll() returned {} results", getServiceName(), result.size());
         return ResponseEntity.ok(result);
     }
 
     @PostMapping()
-    public ResponseEntity<ENTITY> create(@RequestBody @Valid final ENTITY entity) {
+    public ResponseEntity<DTO> create(@RequestBody @Valid final ENTITY entity) {
         LOGGER.info("Creating {}...", entity);
         final long time = System.currentTimeMillis();
-        final ENTITY created = service.create(entity);
+        final DTO created = mapper.toDto(service.create(entity));
         LOGGER.debug("{}.create() finished in {} ms", getServiceName(), System.currentTimeMillis() - time);
         LOGGER.info("{}.create() returned {}", getServiceName(), created);
         return ResponseEntity.ok(created);
@@ -76,10 +90,10 @@ public class AbstractCrudController<ENTITY extends BaseEntity, SERVICE extends A
 
 
     @PutMapping()
-    public ResponseEntity<ENTITY> update(@RequestBody final ENTITY entity) {
+    public ResponseEntity<DTO> update(@RequestBody final ENTITY entity) {
         LOGGER.info("Updating {} with ID: {}...", className, entity.getId());
         final long time = System.currentTimeMillis();
-        final ENTITY update = service.update(entity);
+        final DTO update = mapper.toDto(service.update(entity));
         LOGGER.debug("{}.update() finished in {} ms", getServiceName(), System.currentTimeMillis() - time);
         LOGGER.info("{}.update() returned {}", getServiceName(), update);
         return ResponseEntity.ok(update);

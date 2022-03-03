@@ -5,7 +5,9 @@ import hr.brocom.generic.service.FileService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.URLConnection;
 
 @RestController
 @RequestMapping("/file")
@@ -51,17 +52,18 @@ public class FileController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping("/{id}")
     public ResponseEntity<Resource> getFile(@PathVariable final Long id) throws IOException {
         LOGGER.info("Getting file with ID: {}...", id);
         final long time = System.currentTimeMillis();
-        final Resource result = fileService.find(id);
+        final File result = fileService.find(id);
         LOGGER.debug("FileService.findById() finished in {} ms", System.currentTimeMillis() - time);
-        LOGGER.info("FileService.findById() returned {}", result.getFilename());
+        LOGGER.info("FileService.findById() returned {}", result.getName());
 
-        final String mimeType = URLConnection.guessContentTypeFromName(result.getFile().getName());
-
-        return ResponseEntity.ok().contentType(MediaType.valueOf(mimeType)).body(result);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(result.getType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.getName() + "\"")
+                .body(new ByteArrayResource(result.getData()));
     }
 
 }

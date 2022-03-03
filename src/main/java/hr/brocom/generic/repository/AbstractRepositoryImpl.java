@@ -39,7 +39,7 @@ public abstract class AbstractRepositoryImpl<ENTITY extends BaseEntity, DAO exte
         Predicate predicate = builder.conjunction();
 
         final AbstractSearchQueryCriteriaConsumer searchConsumer =
-                new AbstractSearchQueryCriteriaConsumer(predicate, builder, r);
+                new AbstractSearchQueryCriteriaConsumer(predicate, builder, r, type);
         params.forEach(searchConsumer);
         predicate = searchConsumer.getPredicate();
         query.where(predicate);
